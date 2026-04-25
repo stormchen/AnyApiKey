@@ -1,0 +1,28 @@
+# Python 生成檔案
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# 虛擬環境
+.venv
+
+# 敏感憑證 — 絕對不能提交
+*.json
+!pyproject.toml
+service-account*.json
+**/service-account*.json
+
+# 本地設定目錄
+.anyapikey/
+
+# 匯出檔案
+*.json.enc
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,30 @@
+[project]
+name = "anyapikey"
+version = "0.1.0"
+description = "跨平台 API Key 加密管理工具 — 使用 Firestore 雲端同步"
+readme = "README.md"
+authors = [
+    { name = "Storm Chen", email = "storm.chen@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "google-cloud-firestore>=2.19.0",
+    "cryptography>=44.0.0",
+    "typer>=0.15.0",
+    "pyperclip>=1.9.0",
+    "rich>=13.9.0",
+    "tomli>=2.2.0",
+    "tomli-w>=1.1.0",
+]
+
+[project.scripts]
+anyapikey = "anyapikey.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.10.2,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
