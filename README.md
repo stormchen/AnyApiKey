@@ -2,6 +2,8 @@
 
 跨平台 API Key 加密管理工具 — 使用 Google Firestore 雲端同步。
 
+繁體中文 | [English](README_EN.md)
+
 ## 特色
 
 - **加密優先**：所有 API Key 在本地使用 Fernet (AES-128-CBC) 加密後才上傳至雲端
