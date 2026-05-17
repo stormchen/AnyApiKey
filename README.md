@@ -88,10 +88,20 @@ uv run anyapikey import -i ~/backup/keys.json.enc
 
 ### 快速存取（建議）
 
-在 `~/.zshrc` 或 PowerShell Profile 中加入 alias：
+為了能在終端機快速使用 `ak` 指令，請根據你的作業系統設定命令捷徑：
 
+#### macOS / Linux (`~/.zshrc` 或 `~/.bashrc`)
+加入 alias：
 ```bash
 alias ak="uv run --project ~/Projects/AnyApiKey anyapikey"
+```
+
+#### Windows (PowerShell `$PROFILE`)
+在 PowerShell 由於命令捷徑需要傳遞參數，請加入 Function：
+```powershell
+function ak {
+    uv run --project "$HOME\Projects\AnyApiKey" anyapikey $args
+}
 ```
 
 之後就能用：

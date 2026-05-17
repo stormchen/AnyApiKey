@@ -88,10 +88,20 @@ uv run anyapikey import -i ~/backup/keys.json.enc
 
 ### Quick Access (Recommended)
 
-Add an alias to your `~/.zshrc` or PowerShell Profile:
+To quickly use the `ak` command in your terminal, set up a shortcut based on your operating system:
 
+#### macOS / Linux (`~/.zshrc` or `~/.bashrc`)
+Add an alias:
 ```bash
 alias ak="uv run --project ~/Projects/AnyApiKey anyapikey"
+```
+
+#### Windows (PowerShell `$PROFILE`)
+In PowerShell, add a function to correctly pass arguments:
+```powershell
+function ak {
+    uv run --project "$HOME\Projects\AnyApiKey" anyapikey $args
+}
 ```
 
 Then simply use:
