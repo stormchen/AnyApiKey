@@ -30,6 +30,9 @@ _DEFAULTS: dict[str, dict[str, Any]] = {
         "clipboard_ttl": 30,
         "default_sort": "name",
     },
+    "crypto": {
+        "salt": "",
+    },
 }
 
 
@@ -123,6 +126,27 @@ class Config:
     def default_sort(self) -> str:
         """列表預設排序方式。"""
         return self._data["behavior"]["default_sort"]
+
+    @property
+    def salt(self) -> bytes | None:
+        """取得快取的加密 salt。"""
+        salt_str = self._data.get("crypto", {}).get("salt", "")
+        if not salt_str:
+            return None
+        from anyapikey.crypto import CryptoEngine
+        return CryptoEngine.salt_from_str(salt_str)
+
+    @salt.setter
+    def salt(self, salt: bytes | None) -> None:
+        """儲存加密 salt 至本地快取。"""
+        if "crypto" not in self._data:
+            self._data["crypto"] = {}
+        if salt is None:
+            self._data["crypto"]["salt"] = ""
+        else:
+            from anyapikey.crypto import CryptoEngine
+            self._data["crypto"]["salt"] = CryptoEngine.salt_to_str(salt)
+        self.save()
 
     def get(self, dotted_key: str) -> Any:
         """以 section.key 格式取得設定值。

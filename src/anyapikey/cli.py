@@ -76,20 +76,32 @@ def _ask_master_password(confirm: bool = False) -> str:
     return password
 
 
-def _get_crypto_engine(store: KeyStore, password: str | None = None) -> CryptoEngine:
-    """取得加密引擎（處理 salt 取得與密碼輸入）。
+def _get_crypto_engine(
+    store: KeyStore,
+    config: Config,
+    password: str | None = None,
+) -> CryptoEngine:
+    """取得加密引擎（處理 salt 取得與密碼輸入，優先使用本地快取）。
 
     Args:
         store: Firestore 儲存庫。
+        config: 設定檔實例（用於讀寫 salt 快取）。
         password: 主密碼（None 時互動式詢問）。
 
     Returns:
         CryptoEngine 實例。
     """
-    salt = store.get_salt()
+    # 優先從本地快取讀取 salt
+    salt = config.salt
+
     if salt is None:
-        rprint("[red]❌ 尚未初始化，請先執行 'anyapikey init'[/red]")
-        raise typer.Exit(1)
+        # 本地無快取，從遠端 Firestore 獲取
+        salt = store.get_salt()
+        if salt is None:
+            rprint("[red]❌ 尚未初始化，請先執行 'anyapikey init'[/red]")
+            raise typer.Exit(1)
+        # 快取到本地
+        config.salt = salt
 
     if password is None:
         password = _ask_master_password()
@@ -145,11 +157,13 @@ def init() -> None:
     if existing_salt:
         rprint("[green]✅ 偵測到已有加密設定（從其他裝置同步）[/green]")
         rprint("[dim]   將使用現有的加密 salt[/dim]")
+        config.salt = existing_salt
     else:
         rprint("\n[dim]🔐 生成加密 salt...[/dim]")
         salt = CryptoEngine.generate_salt()
         store.save_salt(salt)
-        rprint("[green]✅ 加密 salt 已儲存至 Firestore[/green]")
+        config.salt = salt
+        rprint("[green]✅ 加密 salt 已儲存至 Firestore 與本地快取[/green]")
 
         # 首次設定：要求設定主密碼（僅用於驗證，不儲存）
         rprint("\n[bold]請設定主密碼（此密碼不會被儲存，請務必牢記）[/bold]")
@@ -187,7 +201,7 @@ def set_key(
             raise typer.Exit(1)
 
     # 加密並儲存
-    engine = _get_crypto_engine(store)
+    engine = _get_crypto_engine(store, config)
     encrypted = engine.encrypt(key)
     store.save(service, encrypted, category=category, note=note)
     rprint(f"[green]✅ {service} 已加密儲存至雲端[/green]")
@@ -208,7 +222,7 @@ def get_key(
         rprint(f"[red]❌ 找不到服務：{service}[/red]")
         raise typer.Exit(1)
 
-    engine = _get_crypto_engine(store)
+    engine = _get_crypto_engine(store, config)
 
     try:
         decrypted = engine.decrypt(entry.encrypted_key)
@@ -390,7 +404,7 @@ def export_keys(
         raise typer.Exit(0)
 
     # 用目前主密碼解密所有 Key
-    engine = _get_crypto_engine(store)
+    engine = _get_crypto_engine(store, config)
 
     export_data = []
     for entry in entries:
@@ -462,7 +476,7 @@ def import_keys(
     import_data = json.loads(payload)
 
     # 用目前主密碼重新加密並儲存
-    engine = _get_crypto_engine(store)
+    engine = _get_crypto_engine(store, config)
 
     imported = 0
     skipped = 0
@@ -494,11 +508,14 @@ def verify() -> None:
     config = _load_config()
     store = _connect_store(config)
 
-    # 取得 salt
-    salt = store.get_salt()
+    # 優先從本地快取取得 salt，沒有才從雲端拿
+    salt = config.salt
     if salt is None:
-        rprint("[red]❌ 尚未初始化[/red]")
-        raise typer.Exit(1)
+        salt = store.get_salt()
+        if salt is None:
+            rprint("[red]❌ 尚未初始化[/red]")
+            raise typer.Exit(1)
+        config.salt = salt
 
     password = _ask_master_password()
     engine = CryptoEngine(password, salt)
