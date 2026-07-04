@@ -11,6 +11,13 @@ import json
 import sys
 from pathlib import Path
 
+# 解決 Windows 終端機 (CP950/MS950) 無法顯示 Emoji/UTF-8 字符導致的 UnicodeEncodeError
+if sys.platform.startswith("win"):
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
+
 import typer
 from rich import print as rprint
 from rich.console import Console
@@ -149,11 +156,20 @@ def init() -> None:
     # 步驟 3：測試連線
     rprint("\n[dim]📡 測試 Firestore 連線...[/dim]")
     store = _connect_store(config)
-    store.test_connection()
+    try:
+        store.test_connection()
+    except StoreError as exc:
+        rprint(f"[red]❌ Firestore 連線測試失敗：{exc}[/red]")
+        raise typer.Exit(1) from exc
     rprint("[green]✅ Firestore 連線正常[/green]")
 
     # 步驟 4：檢查/生成 salt
-    existing_salt = store.get_salt()
+    try:
+        existing_salt = store.get_salt()
+    except Exception as exc:
+        rprint(f"[red]❌ 讀取加密設定失敗：{exc}[/red]")
+        raise typer.Exit(1) from exc
+
     if existing_salt:
         rprint("[green]✅ 偵測到已有加密設定（從其他裝置同步）[/green]")
         rprint("[dim]   將使用現有的加密 salt[/dim]")
@@ -161,7 +177,11 @@ def init() -> None:
     else:
         rprint("\n[dim]🔐 生成加密 salt...[/dim]")
         salt = CryptoEngine.generate_salt()
-        store.save_salt(salt)
+        try:
+            store.save_salt(salt)
+        except Exception as exc:
+            rprint(f"[red]❌ 儲存加密設定失敗：{exc}[/red]")
+            raise typer.Exit(1) from exc
         config.salt = salt
         rprint("[green]✅ 加密 salt 已儲存至 Firestore 與本地快取[/green]")
 

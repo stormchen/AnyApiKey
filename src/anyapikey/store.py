@@ -48,6 +48,10 @@ class KeyStore:
             )
         try:
             self._db = FirestoreClient.from_service_account_json(str(path))
+            # 預先驗證憑證，避免 gRPC 因為認證錯誤而無限重試掛起
+            if self._db._credentials:
+                from google.auth.transport.requests import Request
+                self._db._credentials.refresh(Request())
         except Exception as exc:
             raise StoreError(f"Firestore 連線失敗：{exc}") from exc
 
@@ -90,8 +94,8 @@ class KeyStore:
             StoreError: 連線失敗。
         """
         try:
-            # 嘗試讀取 _meta 集合（即使文件不存在也不會報錯）
-            self._meta.document(_CRYPTO_DOC).get()
+            # 嘗試讀取 _meta 集合（即使文件不存在也不會報錯），並設定較短的逾時時間避免掛起
+            self._meta.document(_CRYPTO_DOC).get(timeout=10.0)
             return True
         except Exception as exc:
             raise StoreError(f"Firestore 連線測試失敗：{exc}") from exc
