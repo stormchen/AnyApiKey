@@ -559,6 +559,21 @@ def verify() -> None:
         raise typer.Exit(1)
 
 
+@app.command(name="ui")
+def ui() -> None:
+    """🖥️ 啟動互動式 TUI 介面(側欄式)。"""
+    try:
+        from anyapikey.tui import AnyApiKeyApp
+    except ImportError:
+        rprint("[red]❌ TUI 需要 textual 套件[/red]")
+        rprint("[yellow]   請執行:uv sync --extra ui[/yellow]")
+        raise typer.Exit(1)
+
+    config = _load_config()
+    store = _connect_store(config)
+    AnyApiKeyApp(config, store).run()
+
+
 @app.command()
 def version() -> None:
     """📌 顯示版本資訊。"""

@@ -45,6 +45,18 @@ uv run anyapikey init
 
 ### Usage
 
+#### Interactive TUI
+
+AnyApiKey provides a sidebar-style terminal user interface powered by Textual, featuring category navigation, masked previews, one-click copy, and auto-lock:
+
+```bash
+# Install with UI optional dependencies
+uv sync --extra ui
+
+# Launch TUI
+uv run anyapikey ui
+```
+
 #### Basic Operations
 
 ```bash
@@ -179,6 +191,18 @@ uv run anyapikey init
 ```
 
 ### 使用方式
+
+#### 互動式 TUI 介面
+
+AnyApiKey 提供精緻的側欄式終端互動介面（基於 Textual），支援分類切換、即時遮罩預覽、快捷鍵複製、重新命名與閒置自動鎖定：
+
+```bash
+# 安裝含 UI 擴充套件
+uv sync --extra ui
+
+# 啟動 TUI 介面
+uv run anyapikey ui
+```
 
 #### 基本操作
 
